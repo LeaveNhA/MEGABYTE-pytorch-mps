@@ -12,13 +12,14 @@ from torch.utils.data import DataLoader, Dataset
 # constants
 
 NUM_BATCHES = int(1e5)
-BATCH_SIZE = 4
+BATCH_SIZE = 1 # MPS has a limitation over matching seqs. Should be 1.
 GRADIENT_ACCUMULATE_EVERY = 4
 LEARNING_RATE = 2e-4
 VALIDATE_EVERY  = 100
 GENERATE_EVERY  = 500
 PRIME_LEN = 100
 SEQ_LEN = 8192
+DEVICE = "mps" # you can set it any device.
 
 # helpers
 
@@ -41,7 +42,7 @@ model = MEGABYTE(
     depth = (6, 4, 2),
     max_seq_len = (512, 4, 4),
     flash_attn = True
-).cuda()
+).to(DEVICE)
 
 # prepare enwik8 data
 
@@ -59,7 +60,7 @@ class TextSamplerDataset(Dataset):
     def __getitem__(self, index):
         rand_start = torch.randint(0, self.data.size(0) - self.seq_len, (1,))
         full_seq = self.data[rand_start: rand_start + self.seq_len].long()
-        return full_seq.cuda()
+        return full_seq.to(DEVICE)
 
     def __len__(self):
         return self.data.size(0) // self.seq_len
